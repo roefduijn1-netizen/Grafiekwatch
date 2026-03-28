@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Liquid Glass | Grafieken Studio</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: radial-gradient(circle at 20% 30%, rgba(10, 20, 40, 0.95), rgba(5, 10, 20, 0.98));
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            padding: 2rem;
+            backdrop-filter: blur(2px);
+        }
+
+        /* Main glass container */
+        .glass-app {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(20, 30, 45, 0.25);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        /* Inner content with padding */
+        .app-inner {
+            padding: 2rem 2rem 2rem 2rem;
+        }
+
+        /* Headers */
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #FFFFFF, #B0C4FF);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+            margin-bottom: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            border-left: 4px solid rgba(255, 255, 255, 0.5);
+            padding-left: 1.2rem;
+        }
+
+        h1 i {
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        h2, h3 {
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+            letter-spacing: -0.2px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        /* Project bar — liquid glass style */
+        .project-bar {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            border-radius: 2rem;
+            padding: 0.8rem 1.4rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .project-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .project-header span {
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-new-project {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.5rem 1.2rem;
+            border-radius: 2rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .btn-new-project:hover {
+            background: rgba(255, 255, 255, 0.35);
+            transform: scale(0.96);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .projects-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            align-items: center;
+        }
+
+        .project-card {
+            background: rgba(20, 30, 50, 0.5);
+            backdrop-filter: blur(16px);
+            border-radius: 2rem;
+            padding: 0.5rem 1rem 0.5rem 1.2rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.7rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .project-card.active {
+            background: rgba(80, 140, 210, 0.45);
+            border-color: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 0 12px rgba(80, 140, 210, 0.4);
+        }
+
+        .project-name {
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: white;
+            max-width: 160px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .project-actions button {
+            background: rgba(0, 0, 0, 0.3);
+            border: none;
+            cursor: pointer;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.7);
+            transition: 0.1s;
+            padding: 0.3rem 0.5rem;
+            border-radius: 1.5rem;
+        }
+
+        .project-actions button:hover {
+            background: rgba(255, 80, 80, 0.6);
+            color: white;
+        }
+
+        /* Graph container */
+        .graph-container {
+            background: rgba(10, 20, 35, 0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 2rem;
+            padding: 1.2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+        }
+
+        canvas {
+            max-height: 380px;
+            width: 100%;
+            border-radius: 1rem;
+        }
+
+        /* Form styling */
+        .data-form {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border-radius: 1.8rem;
+            padding: 1.2rem 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 160px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 0.4rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 1.2rem;
+            font-size: 0.9rem;
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.7);
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .btn-primary {
+            background: rgba(70, 130, 200, 0.8);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.7rem 1.5rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.7rem 1.5rem;
+            border-radius: 2rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn-danger {
+            background: rgba(200, 70, 70, 0.7);
+        }
+
+        .btn-primary:hover, .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Table styling */
+        .data-table-wrapper {
+            overflow-x: auto;
+            border-radius: 1.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        th, td {
+            padding: 1rem 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.05);
+            font-weight: 600;
+            color: white;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 0.6rem;
+        }
+
+        .edit-btn, .delete-btn {
+            background: rgba(0, 0, 0, 0.4);
+            border: none;
+            font-size: 0.9rem;
+            cursor: pointer;
+            padding: 0.3rem 0.6rem;
+            border-radius: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .edit-btn:hover { background: rgba(70, 130, 200, 0.7); }
+        .delete-btn:hover { background: rgba(200, 70, 70, 0.7); }
+
+        .empty-message {
+            text-align: center;
+            padding: 2rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-style: italic;
+        }
+
+        footer {
+            margin-top: 2rem;
+            font-size: 0.7rem;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.4);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 700px) {
+            body { padding: 1rem; }
+            .app-inner { padding: 1.2rem; }
+            .data-form { flex-direction: column; align-items: stretch; }
+        }
+
+        /* Subtle animation for glass */
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .glass-app::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(115deg, transparent, rgba(255,255,255,0.05), transparent);
+            background-size: 200% 100%;
+            pointer-events: none;
+            animation: shimmer 12s infinite linear;
+        }
+
+        .glass-app {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+<div class="glass-app">
+    <div class="app-inner">
+        <h1>
+            <i class="fas fa-chart-line"></i>
+            Liquid Glass Studio
+        </h1>
+
+        <!-- PROJECT TAAKBALK -->
+        <div class="project-bar">
+            <div class="project-header">
+                <span><i class="fas fa-tasks"></i> Projecten</span>
+                <button id="newProjectBtn" class="btn-new-project"><i class="fas fa-plus-circle"></i> Nieuw project</button>
+            </div>
+            <div id="projectsList" class="projects-list">
+                <!-- Dynamisch -->
+            </div>
+        </div>
+
+        <!-- ACTIEF PROJECT -->
+        <div id="activeProjectArea">
+            <h2 id="activeProjectTitle"><i class="fas fa-chart-simple"></i> Geen actief project</h2>
+            <div class="graph-container">
+                <canvas id="mainChart" width="800" height="350" style="max-height: 350px; width:100%"></canvas>
+                <div id="chartEmptyMsg" style="text-align:center; padding:1rem; color:rgba(255,255,255,0.6); display:none;">Geen data — voeg meetpunten toe</div>
+            </div>
+
+            <!-- DATA INVOER -->
+            <div class="data-form">
+                <div class="form-group">
+                    <label><i class="far fa-calendar-alt"></i> Datum</label>
+                    <input type="date" id="dataDate" class="date-input">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-chart-simple"></i> Waarde</label>
+                    <input type="number" id="dataValue" placeholder="bijv. 23.5" step="any">
+                </div>
+                <div class="form-actions">
+                    <button id="addDataBtn" class="btn-primary"><i class="fas fa-save"></i> Toevoegen</button>
+                    <button id="cancelEditBtn" class="btn-secondary" style="display: none;"><i class="fas fa-times"></i> Annuleren</button>
+                </div>
+            </div>
+
+            <h3><i class="fas fa-table-list"></i> Meetgegevens</h3>
+            <div class="data-table-wrapper">
+                <table id="dataTable">
+                    <thead>
+                        <tr><th>Datum</th><th>Waarde</th><th>Acties</th></tr>
+                    </thead>
+                    <tbody id="dataTableBody">
+                        <tr><td colspan="3" class="empty-message">Geen gegevens</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <footer>Liquid Glass • Projecten slaan lokaal op • Datum wordt automatisch ingevuld</footer>
+    </div>
+</div>
+
+<script>
+    // ========== DATA MODEL ==========
+    let projects = [];           // { id, name, dataPoints: [{ id, date, value }] }
+    let activeProjectId = null;
+    let editingPointId = null;
+    let chartInstance = null;
+
+    // DOM elements
+    const projectsListDiv = document.getElementById('projectsList');
+    const newProjectBtn = document.getElementById('newProjectBtn');
+    const activeProjectTitleSpan = document.getElementById('activeProjectTitle');
+    const dataDateInput = document.getElementById('dataDate');
+    const dataValueInput = document.getElementById('dataValue');
+    const addDataBtn = document.getElementById('addDataBtn');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    const dataTableBody = document.getElementById('dataTableBody');
+    const chartCanvas = document.getElementById('mainChart');
+    const chartEmptyMsg = document.getElementById('chartEmptyMsg');
+
+    function getTodayDate() {
+        const today = new Date();
+        return today.toISOString().split('T')[0];
+    }
+
+    function resetFormToAddMode() {
+        editingPointId = null;
+        dataDateInput.value = getTodayDate();
+        dataValueInput.value = '';
+        addDataBtn.innerHTML = '<i class="fas fa-save"></i> Toevoegen';
+        cancelEditBtn.style.display = 'none';
+    }
+
+    function sortProjectData(project) {
+        if (!project.dataPoints) project.dataPoints = [];
+        project.dataPoints.sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    function saveToLocalStorage() {
+        localStorage.setItem('glassGraphProjects', JSON.stringify(projects));
+    }
+
+    function loadFromLocalStorage() {
+        const stored = localStorage.getItem('glassGraphProjects');
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored);
+                if (Array.isArray(parsed)) {
+                    projects = parsed;
+                    for (let p of projects) {
+                        if (!p.dataPoints) p.dataPoints = [];
+                        for (let dp of p.dataPoints) {
+                            if (!dp.id) dp.id = crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random();
+                        }
+                        sortProjectData(p);
+                    }
+                } else { projects = []; }
+            } catch(e) { projects = []; }
+        } else {
+            projects = [];   // LEEG, geen voorbeelddata
+        }
+        if (projects.length > 0 && !activeProjectId) {
+            activeProjectId = projects[0].id;
+        } else if (projects.length === 0) {
+            activeProjectId = null;
+        }
+    }
+
+    function getActiveProject() {
+        if (!activeProjectId) return null;
+        return projects.find(p => p.id === activeProjectId) || null;
+    }
+
+    function renderAll() {
+        renderProjectList();
+        renderActiveProjectHeader();
+        const activeProj = getActiveProject();
+        if (activeProj) {
+            renderChart();
+            renderDataTable();
+            dataDateInput.disabled = false;
+            dataValueInput.disabled = false;
+            addDataBtn.disabled = false;
+        } else {
+            if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+            chartEmptyMsg.style.display = 'block';
+            chartCanvas.style.display = 'none';
+            dataTableBody.innerHTML = '<tr><td colspan="3" class="empty-message">Geen actief project — maak of selecteer een project</td></tr>';
+            dataDateInput.disabled = true;
+            dataValueInput.disabled = true;
+            addDataBtn.disabled = true;
+        }
+    }
+
+    function renderProjectList() {
+        if (!projects.length) {
+            projectsListDiv.innerHTML = `<div class="empty-message" style="padding:0.5rem;"><i class="fas fa-folder-open"></i> Geen projecten — klik 'Nieuw project'</div>`;
+            return;
+        }
+        let html = '';
+        projects.forEach(proj => {
+            const isActive = (activeProjectId === proj.id);
+            html += `
+                <div class="project-card ${isActive ? 'active' : ''}" data-project-id="${proj.id}">
+                    <span class="project-name" data-id="${proj.id}">${escapeHtml(proj.name)}</span>
+                    <div class="project-actions">
+                        <button class="rename-project-btn" data-id="${proj.id}" title="Naam wijzigen"><i class="fas fa-pen"></i></button>
+                        <button class="delete-project-btn" data-id="${proj.id}" title="Project verwijderen"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `;
+        });
+        projectsListDiv.innerHTML = html;
+
+        document.querySelectorAll('.project-name').forEach(el => {
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const pid = el.getAttribute('data-id');
+                if (pid) switchProject(pid);
+            });
+        });
+        document.querySelectorAll('.rename-project-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const pid = btn.getAttribute('data-id');
+                if (pid) renameProject(pid);
+            });
+        });
+        document.querySelectorAll('.delete-project-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const pid = btn.getAttribute('data-id');
+                if (pid) deleteProject(pid);
+            });
+        });
+    }
+
+    function switchProject(projectId) {
+        if (activeProjectId === projectId) return;
+        activeProjectId = projectId;
+        resetFormToAddMode();
+        editingPointId = null;
+        renderAll();
+        saveToLocalStorage();
+    }
+
+    function renameProject(projectId) {
+        const project = projects.find(p => p.id === projectId);
+        if (!project) return;
+        const newName = prompt("Geef een nieuwe naam voor dit project:", project.name);
+        if (newName && newName.trim() !== "") {
+            project.name = newName.trim().substring(0, 30);
+            saveToLocalStorage();
+            renderAll();
+        }
+    }
+
+    function deleteProject(projectId) {
+        const project = projects.find(p => p.id === projectId);
+        if (!project) return;
+        const confirmDel = confirm(`Weet je zeker dat je project "${project.name}" wilt verwijderen?`);
+        if (!confirmDel) return;
+        const index = projects.findIndex(p => p.id === projectId);
+        if (index !== -1) projects.splice(index, 1);
+        if (activeProjectId === projectId) {
+            activeProjectId = projects.length > 0 ? projects[0]?.id : null;
+        }
+        if (editingPointId) editingPointId = null;
+        resetFormToAddMode();
+        saveToLocalStorage();
+        renderAll();
+    }
+
+    function renderActiveProjectHeader() {
+        const activeProj = getActiveProject();
+        if (activeProj) {
+            activeProjectTitleSpan.innerHTML = `<i class="fas fa-chart-simple"></i> ${escapeHtml(activeProj.name)} <span style="font-size:0.7rem; background:rgba(255,255,255,0.2); padding:0.2rem 0.6rem; border-radius:1rem;">${activeProj.dataPoints.length} punten</span>`;
+        } else {
+            activeProjectTitleSpan.innerHTML = `<i class="fas fa-chart-simple"></i> Geen actief project`;
+        }
+    }
+
+    function renderChart() {
+        const activeProj = getActiveProject();
+        if (!activeProj || activeProj.dataPoints.length === 0) {
+            if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+            chartCanvas.style.display = 'none';
+            chartEmptyMsg.style.display = 'block';
+            return;
+        }
+        chartCanvas.style.display = 'block';
+        chartEmptyMsg.style.display = 'none';
+        const sorted = [...activeProj.dataPoints].sort((a,b) => a.date.localeCompare(b.date));
+        const labels = sorted.map(p => p.date);
+        const values = sorted.map(p => p.value);
+        if (chartInstance) {
+            chartInstance.data.labels = labels;
+            chartInstance.data.datasets[0].data = values;
+            chartInstance.update();
+        } else {
+            const ctx = chartCanvas.getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Waarden',
+                        data: values,
+                        borderColor: '#80b4ff',
+                        backgroundColor: 'rgba(128, 180, 255, 0.1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#c0e0ff',
+                        pointBorderColor: '#ffffff',
+                        pointRadius: 4,
+                        tension: 0.2,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { labels: { color: '#ffffff' } },
+                        tooltip: { backgroundColor: 'rgba(0,0,0,0.7)', titleColor: '#fff', bodyColor: '#ddd' }
+                    },
+                    scales: {
+                        y: { 
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            title: { display: true, text: 'Waarde', color: '#eee' },
+                            ticks: { color: '#eee' }
+                        },
+                        x: { 
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            title: { display: true, text: 'Datum', color: '#eee' },
+                            ticks: { color: '#eee' }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    function renderDataTable() {
+        const activeProj = getActiveProject();
+        if (!activeProj || !activeProj.dataPoints.length) {
+            dataTableBody.innerHTML = '<tr><td colspan="3" class="empty-message">Geen meetpunten — voeg data toe</td></tr>';
+            return;
+        }
+        const sorted = [...activeProj.dataPoints].sort((a,b) => a.date.localeCompare(b.date));
+        let rows = '';
+        sorted.forEach(point => {
+            rows += `
+                <tr data-point-id="${point.id}">
+                    <td>${escapeHtml(point.date)}</td>
+                    <td>${parseFloat(point.value).toLocaleString('nl-NL', {minimumFractionDigits: 1, maximumFractionDigits: 4})}</td>
+                    <td class="table-actions">
+                        <button class="edit-btn" data-id="${point.id}"><i class="fas fa-edit"></i></button>
+                        <button class="delete-btn" data-id="${point.id}"><i class="fas fa-trash-alt"></i></button>
+                    </td>
+                </tr>
+            `;
+        });
+        dataTableBody.innerHTML = rows;
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', () => startEditDataPoint(btn.getAttribute('data-id')));
+        });
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', () => deleteDataPoint(btn.getAttribute('data-id')));
+        });
+    }
+
+    function startEditDataPoint(pointId) {
+        const activeProj = getActiveProject();
+        if (!activeProj) return;
+        const point = activeProj.dataPoints.find(p => p.id === pointId);
+        if (!point) return;
+        editingPointId = pointId;
+        dataDateInput.value = point.date;
+        dataValueInput.value = point.value;
+        addDataBtn.innerHTML = '<i class="fas fa-pen"></i> Bijwerken';
+        cancelEditBtn.style.display = 'inline-flex';
+    }
+
+    function saveDataPoint() {
+        const activeProj = getActiveProject();
+        if (!activeProj) {
+            alert("Geen actief project, maak eerst een project aan.");
+            return;
+        }
+        const dateVal = dataDateInput.value;
+        const rawValue = dataValueInput.value;
+        if (!dateVal) { alert("Datum is verplicht."); return; }
+        const valueNum = parseFloat(rawValue);
+        if (isNaN(valueNum)) { alert("Voer een geldige numerieke waarde in."); return; }
+
+        if (editingPointId) {
+            const index = activeProj.dataPoints.findIndex(p => p.id === editingPointId);
+            if (index !== -1) {
+                activeProj.dataPoints[index].date = dateVal;
+                activeProj.dataPoints[index].value = valueNum;
+            }
+            editingPointId = null;
+        } else {
+            const newId = crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random();
+            activeProj.dataPoints.push({ id: newId, date: dateVal, value: valueNum });
+        }
+        sortProjectData(activeProj);
+        saveToLocalStorage();
+        resetFormToAddMode();
+        renderAll();
+    }
+
+    function deleteDataPoint(pointId) {
+        const activeProj = getActiveProject();
+        if (!activeProj) return;
+        if (confirm("Punt definitief verwijderen?")) {
+            activeProj.dataPoints = activeProj.dataPoints.filter(p => p.id !== pointId);
+            if (editingPointId === pointId) resetFormToAddMode();
+            saveToLocalStorage();
+            renderAll();
+        }
+    }
+
+    function createNewProject() {
+        let baseName = "Nieuw project";
+        let counter = 1;
+        while (projects.some(p => p.name === baseName)) {
+            baseName = `Project ${counter}`;
+            counter++;
+        }
+        const newId = crypto.randomUUID ? crypto.randomUUID() : 'proj_' + Date.now();
+        projects.push({ id: newId, name: baseName, dataPoints: [] });
+        activeProjectId = newId;
+        saveToLocalStorage();
+        resetFormToAddMode();
+        renderAll();
+    }
+
+    function cancelEdit() {
+        resetFormToAddMode();
+        renderAll();
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function init() {
+        loadFromLocalStorage();
+        if (projects.length === 0) activeProjectId = null;
+        dataDateInput.value = getTodayDate();
+        renderAll();
+
+        newProjectBtn.addEventListener('click', createNewProject);
+        addDataBtn.addEventListener('click', saveDataPoint);
+        cancelEditBtn.addEventListener('click', cancelEdit);
+        dataValueInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') saveDataPoint(); });
+    }
+
+    init();
+</script>
+</body>
+</html>
